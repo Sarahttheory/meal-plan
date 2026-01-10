@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS days_of_week;
+DROP TABLE IF EXISTS meal_types;
+DROP TABLE IF EXISTS meal_plan;

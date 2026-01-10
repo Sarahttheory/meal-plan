@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Plan 2026</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: auto; }
+
+    /* Сетка планировщика */
+    .weekly-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 40px; }
+    .day-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); min-height: 200px; }
+    .day-card h3 { border-bottom: 2px solid #4CAF50; padding-bottom: 5px; color: #333; }
+    .meal-item { background: #e8f5e9; margin: 5px 0; padding: 8px; border-radius: 4px; font-size: 0.9em; }
+    .meal-type { font-weight: bold; color: #2e7d32; display: block; font-size: 0.8em; text-transform: uppercase; }
+
+    /* Формы */
+    .forms-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: white; padding: 20px; border-radius: 8px; }
+    input, select, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    button { background: #4CAF50; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #45a049; }
+    .ingredients-select { height: 100px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>План питания на неделю</h1>
+
+  <div id="weekly-plan" class="weekly-grid">
+  </div>
+
+  <div class="forms-section">
+    <div>
+      <h3>1. Создать новое блюдо</h3>
+      <input type="text" id="dish-name" placeholder="Название блюда (н-р: Борщ)">
+      <input type="number" id="dish-calories" placeholder="Калории">
+      <p><small>Зажми Ctrl, чтобы выбрать несколько ингредиентов:</small></p>
+      <select id="ingredients-list" class="ingredients-select" multiple>
+      </select>
+      <button onclick="createDish()">Сохранить блюдо</button>
+    </div>
+
+    <div>
+      <h3>2. Добавить в расписание</h3>
+      <select id="dish-selector">
+        <option value="">-- Выберите блюдо --</option>
+      </select>
+      <select id="day-selector">
+        <option value="1">Понедельник</option>
+        <option value="2">Вторник</option>
+        <option value="3">Среда</option>
+        <option value="4">Четверг</option>
+        <option value="5"> Пятница</option>
+        <option value="6">Суббота</option>
+        <option value="7">Воскресенье</option>
+      </select>
+      <select id="type-selector">
+        <option value="1">Завтрак</option>
+        <option value="2">Обед</option>
+        <option value="3">Ужин</option>
+      </select>
+      <button onclick="addToPlan()" style="background: #2196F3;">Добавить в план</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // При загрузке страницы подтягиваем все данные
+  window.onload = function() {
+    loadWeeklyPlan();
+    loadDishes();
+    loadIngredients();
+  };
+
+  // 1. Загрузка плана на неделю (Твой новый метод GetWeeklyPlan)
+  async function loadWeeklyPlan() {
+    const response = await fetch('/mealPlan/weekly');
+    const plan = await response.json();
+    const grid = document.getElementById('weekly-plan');
+    grid.innerHTML = '';
+
+    const days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
+    days.forEach(day => {
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.innerHTML = <h3>${day}</h3>;
+
+      if (plan[day]) {
+        plan[day].forEach(meal => {
+          card.innerHTML += `
+                        <div class="meal-item">
+                            <span class="meal-type">${meal.meal_type}</span>
+                            ${meal.dish_name} <br>
+                            <small>${meal.calories} ккал</small>
+                        </div>
+                    `;
+        });
+      } else {
+        card.innerHTML += <p style="color:#ccc">Свободно</p>;
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  // 2. Создание блюда
+  async function createDish() {
+    const name = document.getElementById('dish-name').value;
+    const calories = parseInt(document.getElementById('dish-calories').value);
+    const ingredients = Array.from(document.getElementById('ingredients-list').selectedOptions).map(o => parseInt(o.value));
+
+    const res = await fetch('/mealPlan/dish/all', {
+      method: 'POST',
+      body: JSON.stringify({ name, calories, ingredient_ids: ingredients })
+    });
+
+    if (res.ok) {
+      alert("Блюдо создано!");
+      loadDishes();
+    }
+  }
+
+  // 3. Добавление в план (кнопка "Добавить в план")
+  async function addToPlan() {
+    const dishId = parseInt(document.getElementById('dish-selector').value);
+    const dayId = parseInt(document.getElementById('day-selector').value);
+    const typeId = parseInt(document.getElementById('type-selector').value);
+
+    const res = await fetch('/mealPlan/add-to-plan', {
+      method: 'POST',
+      body: JSON.stringify({ day_id: dayId, meal_type_id: typeId, dish_id: dishId })
+    });
+
+    if (res.ok) {
+      loadWeeklyPlan();
+    } else {
+      alert("Ошибка. Возможно, это блюдо уже есть в этом приеме пищи.");
+    }
+  }
+
+  // Вспомогательные функции для загрузки списков
+  async function loadDishes() {
+    const res = await fetch('/mealPlan/dish/all');
+    const dishes = await res.json();
+    const sel = document.getElementById('dish-selector');
+    sel.innerHTML = '<option value="">-- Выберите блюдо --</option>';
+    dishes.forEach(d => sel.innerHTML += <option value="${d.id}">${d.name}</option>);
+  }
+
+  async function loadIngredients() {
+    const res = await fetch('/mealPlan/ingredients');
+    const ing = await res.json();
+    const sel = document.getElementById('ingredients-list');
+    ing.forEach(i => sel.innerHTML += <option value="${i.id}">${i.name}</option>);
+  }
+</script>
+
+</body>
+</html>

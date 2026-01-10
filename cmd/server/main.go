@@ -1,36 +1,53 @@
 package main
 
 import (
-	"log"
+	"database/sql"
+	"embed"
+	"log/slog"
 	"meal-plan/internal/config"
+	"meal-plan/internal/database"
 	"meal-plan/internal/handlers"
 	"meal-plan/internal/repository"
 	"meal-plan/internal/service"
 	"net/http"
-
-	"github.com/joho/godotenv"
+	"os"
 )
 
-func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
+var migrationsFS embed.FS
 
+func main() {
 	cfg := config.Load()
-	db := repository.InitDB()
+	setupLogger()
+
+	slog.Info("starting server meal plan", "port", cfg.Port)
+
+	db, err := database.New(cfg.GetDNS())
+	if err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
 	defer db.Close()
 
-	repo := &repository.MealPlanRepository{DB: db}
-	srv := &service.MealPlanService{Repo: repo}
-	h := &handlers.MealPlanHandler{Service: srv}
+	application := mapHandlers(db)
+	runServer(cfg.Port, application)
+}
 
-	router := h.InitRoutes()
+func mapHandlers(db *sql.DB) *handlers.MealPlanHandler {
+	repo := repository.NewMealPlanRepository(db)
+	srv := service.NewMealPlanService(repo)
+	return handlers.NewMealPlanHandler(srv)
+}
 
-	log.Printf("Starting server on port %s", cfg.Port)
-	//if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {
-	//	log.Fatal(err)
-	//} //TODO временно, пока порт занят
-	if err := http.ListenAndServe(":8080", router); err != nil {
-		log.Fatal(err)
+func setupLogger() {
+	opts := &slog.HandlerOptions{Level: slog.LevelDebug}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
+	slog.SetDefault(logger)
+}
+
+func runServer(port string, h *handlers.MealPlanHandler) {
+	slog.Info("server started", "address", "http://localhost:"+port)
+	if err := http.ListenAndServe(":"+port, h.InitRoutes()); err != nil {
+		slog.Error("server failed", "error", err)
+		os.Exit(1)
 	}
 }
