@@ -10,7 +10,8 @@ type Repository interface {
 	SaveDish(ctx context.Context, dish models.CreateDishInput) error
 	GetIngredients(ctx context.Context) ([]models.Ingredient, error)
 	GetWeeklyPlan(ctx context.Context) (models.WeeklyPlan, error)
-	SaveWeeklyPlan(ctx context.Context, plan models.PlanItem) error
+	SaveItem(ctx context.Context, item models.PlanItem) error
+	SaveIngredient(ctx context.Context, ingredient models.Ingredient) error
 }
 type MealPlanService struct {
 	repo Repository

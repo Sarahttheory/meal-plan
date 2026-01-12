@@ -10,8 +10,8 @@ func (s *MealPlanService) GetWeeklyPlan(ctx context.Context) (models.WeeklyPlan,
 	return s.repo.GetWeeklyPlan(ctx)
 }
 
-func (s *MealPlanService) SaveWeeklyPlan(ctx context.Context, plan models.PlanItem) error {
-	return s.repo.SaveWeeklyPlan(ctx, plan)
+func (s *MealPlanService) SaveItem(ctx context.Context, item models.PlanItem) error {
+	return s.repo.SaveItem(ctx, item)
 }
 
 // todo можно будет улучшить с помощью errgroup

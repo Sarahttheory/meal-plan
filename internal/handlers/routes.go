@@ -20,13 +20,16 @@ func (h *MealPlanHandler) InitRoutes() *chi.Mux {
 	r.Get("/dashboard", h.GetDashboard)
 	r.Route("/plan", func(r chi.Router) {
 		r.Get("/weekly", h.GetWeeklyPlan)
-		//r.Put("/add")
+		r.Put("/item", h.SaveItem)
 	})
 
 	r.Route("/dishes", func(r chi.Router) {
 		r.Get("/", h.GetDishes)
 		r.Put("/", h.SaveDish)
-		r.Get("/ingredients", h.GetIngredients)
+	})
+	r.Route("/ingredients", func(r chi.Router) {
+		r.Get("/", h.GetIngredients)
+		r.Put("/", h.SaveIngredient)
 	})
 
 	return r

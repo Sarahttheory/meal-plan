@@ -38,23 +38,25 @@ func (r *MealPlanRepository) GetWeeklyPlan(ctx context.Context) (models.WeeklyPl
 	return plan, nil
 }
 
-// TODO сомнения на счет такого использования транзакции
-func (r *MealPlanRepository) SaveWeeklyPlan(ctx context.Context, plan models.PlanItem) error {
+func (r *MealPlanRepository) SaveItem(ctx context.Context, item models.PlanItem) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not begin transaction: %w", err)
+		return fmt.Errorf("repo: SaveItem failed. Could not begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
 	query := `
-    INSERT INTO meal_plan (day_id, meal_type_id, dish_id) VALUES ($1, $2, $3);
+        INSERT INTO meal_plan (day_id, meal_type_id, dish_id)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (day_id, meal_type_id) 
+        DO UPDATE SET dish_id = EXCLUDED.dish_id;
     `
-	_, err = tx.ExecContext(ctx, query, plan.DayId, plan.MealTypeId, plan.DishId)
+	_, err = tx.ExecContext(ctx, query, item.DayId, item.MealTypeId, item.DishId)
 	if err != nil {
-		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not insert into MealPlan: %w", err)
+		return fmt.Errorf("repo: SaveItem failed. Could not insert into MealPlan: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not commit transaction: %w", err)
+		return fmt.Errorf("repo: SaveItem failed. Could not commit transaction: %w", err)
 	}
 
 	return nil

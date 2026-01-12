@@ -20,7 +20,7 @@ func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var dish models.CreateDishInput
 	if err := json.NewDecoder(r.Body).Decode(&dish); err != nil {
-		h.respondWithJson(w, http.StatusBadRequest, "Error parsing request body")
+		h.respondWithError(w, http.StatusBadRequest, "Error parsing request body")
 		return
 	}
 
@@ -45,4 +45,24 @@ func (h *MealPlanHandler) GetIngredients(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	h.respondWithJson(w, http.StatusOK, ingredients)
+}
+
+func (h *MealPlanHandler) SaveIngredient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var ingredient models.Ingredient
+	if err := json.NewDecoder(r.Body).Decode(&ingredient); err != nil {
+		h.respondWithJson(w, http.StatusBadRequest, "Error parsing request body")
+		return
+	}
+	if err := h.validator.Struct(ingredient); err != nil {
+		h.respondWithError(w, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	err := h.service.SaveIngredient(ctx, ingredient)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, "Could not save ingredient")
+		return
+	}
+	h.respondWithJson(w, http.StatusCreated, map[string]string{"ingredient": ingredient.Name})
 }

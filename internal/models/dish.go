@@ -13,7 +13,7 @@ type Ingredient struct {
 }
 
 type CreateDishInput struct {
-	Name          string `json:"name" validate:"required,min=3,max=100"`
-	Calories      int    `json:"calories" validate:"required,min=0"`
-	IngredientIds []int  `json:"ingredients" validate:"required,min=1"`
+	Name string `json:"name" validate:"required,min=3,max=100"`
+	//Calories      int    `json:"calories" validate:"required,min=0"` todo вернуть калории и ввести их подсчет из ингредиентов
+	IngredientIds []int `json:"ingredient_ids" validate:"required,min=1"`
 }

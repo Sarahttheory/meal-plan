@@ -50,8 +50,8 @@ func (r *MealPlanRepository) SaveDish(ctx context.Context, dish models.CreateDis
 
 	var lastInsertId int
 	err = tx.QueryRowContext(ctx,
-		"INSERT INTO dishes (name, calories) VALUES ($1, $2) RETURNING id",
-		dish.Name, dish.Calories,
+		"INSERT INTO dishes (name) VALUES ($1) RETURNING id",
+		dish.Name,
 	).Scan(&lastInsertId)
 
 	if err != nil {
@@ -93,4 +93,25 @@ func (r *MealPlanRepository) GetIngredients(ctx context.Context) ([]models.Ingre
 		return nil, err
 	}
 	return ingredients, nil
+}
+
+func (r *MealPlanRepository) SaveIngredient(ctx context.Context, ingredient models.Ingredient) error {
+	tx, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("repo: SaveIngredient failed. Could not start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	query := `
+    INSERT INTO ingredients (name) VALUES ($1);
+    `
+	_, err = tx.ExecContext(ctx, query, ingredient.Name)
+	if err != nil {
+		return fmt.Errorf("repo: SaveIngredient failed. Could not insert ingredient: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("repo: SaveIngredient failed. Could not commit transaction: %w", err)
+	}
+
+	return nil
 }

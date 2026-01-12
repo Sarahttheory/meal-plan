@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS meal_plan (
   meal_type_id INT REFERENCES meal_types(id),
   dish_id INT REFERENCES dishes(id) ON DELETE CASCADE,
 
-  CONSTRAINT unique_meal_entry UNIQUE(day_id, meal_type_id, dish_id)
+  CONSTRAINT unique_meal_entry UNIQUE(day_id, meal_type_id)
 );
 -- +goose StatementEnd
 

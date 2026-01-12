@@ -16,24 +16,24 @@ func (h *MealPlanHandler) GetWeeklyPlan(w http.ResponseWriter, r *http.Request) 
 	h.respondWithJson(w, http.StatusOK, weeklyPlan)
 }
 
-func (h *MealPlanHandler) SaveWeeklyPlan(w http.ResponseWriter, r *http.Request) {
+func (h *MealPlanHandler) SaveItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var plan models.PlanItem
-	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
+	var item models.PlanItem
+	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
 		h.respondWithError(w, http.StatusBadRequest, "Error parsing request body")
 		return
 	}
-	if err := h.validator.Struct(plan); err != nil {
+	if err := h.validator.Struct(item); err != nil {
 		h.respondWithError(w, http.StatusBadRequest, "Error validating request body")
 		return
 	}
 
-	err := h.service.SaveWeeklyPlan(ctx, plan)
+	err := h.service.SaveItem(ctx, item)
 	if err != nil {
-		h.respondWithError(w, http.StatusInternalServerError, "Error saving weekly plan")
+		h.respondWithError(w, http.StatusInternalServerError, "Error saving item")
 		return
 	}
-	h.respondWithJson(w, http.StatusCreated, map[string]interface{}{"weekly_plan": plan}) //todo проверить
+	h.respondWithJson(w, http.StatusCreated, map[string]interface{}{"item": item})
 }
 
 func (h *MealPlanHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
