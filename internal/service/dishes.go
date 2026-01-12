@@ -1,17 +1,18 @@
 package service
 
 import (
+	"context"
 	"meal-plan/internal/models"
 )
 
-func (s *MealPlanService) GetDishes() ([]models.Dish, error) {
-	return s.repo.GetDishes()
+func (s *MealPlanService) GetDishes(ctx context.Context) ([]models.Dish, error) {
+	return s.repo.GetDishes(ctx)
 }
 
-func (s *MealPlanService) SaveDish(dish models.CreateDishInput) error {
-	return s.repo.SaveDish(dish)
+func (s *MealPlanService) SaveDish(ctx context.Context, dish models.CreateDishInput) error {
+	return s.repo.SaveDish(ctx, dish)
 }
 
-func (s *MealPlanService) GetIngredients() ([]models.Ingredient, error) {
-	return s.repo.GetIngredients()
+func (s *MealPlanService) GetIngredients(ctx context.Context) ([]models.Ingredient, error) {
+	return s.repo.GetIngredients(ctx)
 }

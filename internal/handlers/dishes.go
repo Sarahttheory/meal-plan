@@ -7,7 +7,8 @@ import (
 )
 
 func (h *MealPlanHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
-	dishes, err := h.service.GetDishes()
+	ctx := r.Context()
+	dishes, err := h.service.GetDishes(ctx)
 	if err != nil {
 		h.respondWithError(w, http.StatusInternalServerError, "Error getting dishes")
 		return
@@ -16,6 +17,7 @@ func (h *MealPlanHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var dish models.CreateDishInput
 	if err := json.NewDecoder(r.Body).Decode(&dish); err != nil {
 		h.respondWithJson(w, http.StatusBadRequest, "Error parsing request body")
@@ -27,7 +29,7 @@ func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.SaveDish(dish)
+	err := h.service.SaveDish(ctx, dish)
 	if err != nil {
 		h.respondWithError(w, http.StatusInternalServerError, "Could not save dish")
 		return
@@ -36,7 +38,8 @@ func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MealPlanHandler) GetIngredients(w http.ResponseWriter, r *http.Request) {
-	ingredients, err := h.service.GetIngredients()
+	ctx := r.Context()
+	ingredients, err := h.service.GetIngredients(ctx)
 	if err != nil {
 		h.respondWithError(w, http.StatusInternalServerError, "Error get ingredients")
 		return

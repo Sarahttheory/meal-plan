@@ -7,7 +7,8 @@ import (
 )
 
 func (h *MealPlanHandler) GetWeeklyPlan(w http.ResponseWriter, r *http.Request) {
-	weeklyPlan, err := h.service.GetWeeklyPlan()
+	ctx := r.Context()
+	weeklyPlan, err := h.service.GetWeeklyPlan(ctx)
 	if err != nil {
 		h.respondWithError(w, http.StatusInternalServerError, "Error getting weekly plan")
 		return
@@ -16,6 +17,7 @@ func (h *MealPlanHandler) GetWeeklyPlan(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *MealPlanHandler) SaveWeeklyPlan(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var plan models.PlanItem
 	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
 		h.respondWithError(w, http.StatusBadRequest, "Error parsing request body")
@@ -26,7 +28,7 @@ func (h *MealPlanHandler) SaveWeeklyPlan(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err := h.service.SaveWeeklyPlan(plan)
+	err := h.service.SaveWeeklyPlan(ctx, plan)
 	if err != nil {
 		h.respondWithError(w, http.StatusInternalServerError, "Error saving weekly plan")
 		return

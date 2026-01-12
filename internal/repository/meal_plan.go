@@ -1,11 +1,12 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"meal-plan/internal/models"
 )
 
-func (r *MealPlanRepository) GetWeeklyPlan() (models.WeeklyPlan, error) {
+func (r *MealPlanRepository) GetWeeklyPlan(ctx context.Context) (models.WeeklyPlan, error) {
 	query := `
     SELECT
         d.name as day_name,
@@ -18,7 +19,7 @@ func (r *MealPlanRepository) GetWeeklyPlan() (models.WeeklyPlan, error) {
     JOIN dishes di ON mp.dish_id = di.id
     ORDER BY d.id, mt.sort_order;
     `
-	rows, err := r.DB.Query(query)
+	rows, err := r.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +39,8 @@ func (r *MealPlanRepository) GetWeeklyPlan() (models.WeeklyPlan, error) {
 }
 
 // TODO сомнения на счет такого использования транзакции
-func (r *MealPlanRepository) SaveWeeklyPlan(plan models.PlanItem) error {
-	tx, err := r.DB.Begin()
+func (r *MealPlanRepository) SaveWeeklyPlan(ctx context.Context, plan models.PlanItem) error {
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not begin transaction: %w", err)
 	}
@@ -48,11 +49,10 @@ func (r *MealPlanRepository) SaveWeeklyPlan(plan models.PlanItem) error {
 	query := `
     INSERT INTO meal_plan (day_id, meal_type_id, dish_id) VALUES ($1, $2, $3);
     `
-	_, err = tx.Exec(query, plan.DayId, plan.MealTypeId, plan.DishId)
+	_, err = tx.ExecContext(ctx, query, plan.DayId, plan.MealTypeId, plan.DishId)
 	if err != nil {
 		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not insert into MealPlan: %w", err)
 	}
-
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not commit transaction: %w", err)
 	}

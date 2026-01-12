@@ -1,12 +1,13 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"meal-plan/internal/models"
 )
 
-func (r *MealPlanRepository) GetDishes() ([]models.Dish, error) {
+func (r *MealPlanRepository) GetDishes(ctx context.Context) ([]models.Dish, error) {
 	query := `
     SELECT d.id, d.name, d.calories,
         COALESCE(json_agg(json_build_object('id', i.id, 'name', i.name)) FILTER (WHERE i.id IS NOT NULL), '[]')
@@ -15,14 +16,13 @@ func (r *MealPlanRepository) GetDishes() ([]models.Dish, error) {
     LEFT JOIN ingredients i ON iid.ingredient_id = i.id
     GROUP BY d.id;
     `
-	rows, err := r.DB.Query(query)
+	rows, err := r.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	var dishes []models.Dish
-
 	for rows.Next() {
 		var dish models.Dish
 		var ingredients []byte
@@ -33,22 +33,23 @@ func (r *MealPlanRepository) GetDishes() ([]models.Dish, error) {
 		if err := json.Unmarshal(ingredients, &dish.Ingredients); err != nil {
 			return nil, err
 		}
-
 		dishes = append(dishes, dish)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 	return dishes, nil
 }
 
-func (r *MealPlanRepository) SaveDish(dish models.CreateDishInput) error {
-	tx, err := r.DB.Begin()
+func (r *MealPlanRepository) SaveDish(ctx context.Context, dish models.CreateDishInput) error {
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("repo: SaveDish failed. Could not start transaction: %w", err)
 	}
-
 	defer tx.Rollback()
 
 	var lastInsertId int
-	err = tx.QueryRow(
+	err = tx.QueryRowContext(ctx,
 		"INSERT INTO dishes (name, calories) VALUES ($1, $2) RETURNING id",
 		dish.Name, dish.Calories,
 	).Scan(&lastInsertId)
@@ -58,7 +59,7 @@ func (r *MealPlanRepository) SaveDish(dish models.CreateDishInput) error {
 	}
 
 	for _, ingredientId := range dish.IngredientIds {
-		_, err = tx.Exec(
+		_, err = tx.ExecContext(ctx,
 			"INSERT INTO ingredients_in_dish (dish_id, ingredient_id) VALUES ($1, $2)",
 			lastInsertId, ingredientId,
 		)
@@ -69,12 +70,12 @@ func (r *MealPlanRepository) SaveDish(dish models.CreateDishInput) error {
 	return tx.Commit()
 }
 
-func (r *MealPlanRepository) GetIngredients() ([]models.Ingredient, error) {
+func (r *MealPlanRepository) GetIngredients(ctx context.Context) ([]models.Ingredient, error) {
 	query := `
     SELECT id, name
     FROM ingredients;
     `
-	rows, err := r.DB.Query(query)
+	rows, err := r.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +88,9 @@ func (r *MealPlanRepository) GetIngredients() ([]models.Ingredient, error) {
 			return nil, err
 		}
 		ingredients = append(ingredients, ingredient)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 	return ingredients, nil
 }
