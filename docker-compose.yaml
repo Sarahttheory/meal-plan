@@ -8,17 +8,14 @@ services:
     container_name: meal_plan_postgres
     restart: always
     environment:
-      # Берем настройки из твоего .env файла автоматически
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
-      # Данные будут храниться в папке твоего проекта, а не внутри Докера
       - ./pgdata:/var/lib/postgresql/data
 
-  # Можно добавить Adminer (веб-интерфейс для БД), чтобы не ставить DBeaver/Datagrip
   adminer:
     image: adminer
     restart: always
