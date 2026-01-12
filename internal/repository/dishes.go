@@ -71,7 +71,7 @@ func (r *MealPlanRepository) SaveDish(dish models.CreateDishInput) error {
 
 func (r *MealPlanRepository) GetIngredients() ([]models.Ingredient, error) {
 	query := `
-    SELECT id, name, calories
+    SELECT id, name
     FROM ingredients;
     `
 	rows, err := r.DB.Query(query)
@@ -83,7 +83,7 @@ func (r *MealPlanRepository) GetIngredients() ([]models.Ingredient, error) {
 	var ingredients []models.Ingredient
 	for rows.Next() {
 		var ingredient models.Ingredient
-		if err := rows.Scan(&ingredient.ID, &ingredient.Name, &ingredient.Calories); err != nil {
+		if err := rows.Scan(&ingredient.ID, &ingredient.Name); err != nil {
 			return nil, err
 		}
 		ingredients = append(ingredients, ingredient)

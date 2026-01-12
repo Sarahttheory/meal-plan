@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log/slog"
 	"meal-plan/internal/models"
 	"net/http"
 )
@@ -10,30 +9,27 @@ import (
 func (h *MealPlanHandler) GetWeeklyPlan(w http.ResponseWriter, r *http.Request) {
 	weeklyPlan, err := h.service.GetWeeklyPlan()
 	if err != nil {
-		http.Error(w, "Error getting weekly plan", http.StatusInternalServerError)
+		h.respondWithError(w, http.StatusInternalServerError, "Error getting weekly plan")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(weeklyPlan)
+	h.respondWithJson(w, http.StatusOK, weeklyPlan)
 }
 
 func (h *MealPlanHandler) SaveWeeklyPlan(w http.ResponseWriter, r *http.Request) {
 	var plan models.PlanItem
 	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
+		h.respondWithError(w, http.StatusBadRequest, "Error parsing request body")
 		return
 	}
-
 	if err := h.validator.Struct(plan); err != nil {
-		http.Error(w, "Error validating request body", http.StatusBadRequest)
+		h.respondWithError(w, http.StatusBadRequest, "Error validating request body")
 		return
 	}
 
 	err := h.service.SaveWeeklyPlan(plan)
 	if err != nil {
-		slog.Error("Error saving weekly plan: %v", err)
-		http.Error(w, "Error saving weekly plan", http.StatusInternalServerError)
+		h.respondWithError(w, http.StatusInternalServerError, "Error saving weekly plan")
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	h.respondWithJson(w, http.StatusCreated, map[string]interface{}{"weekly_plan": plan}) //todo проверить
 }

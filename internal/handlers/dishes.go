@@ -9,11 +9,10 @@ import (
 func (h *MealPlanHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
 	dishes, err := h.service.GetDishes()
 	if err != nil {
-		http.Error(w, "Error getting dishes", http.StatusInternalServerError)
+		h.respondWithError(w, http.StatusInternalServerError, "Error getting dishes")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dishes)
+	h.respondWithJson(w, http.StatusOK, dishes)
 }
 
 func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
@@ -33,15 +32,14 @@ func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
 		h.respondWithError(w, http.StatusInternalServerError, "Could not save dish")
 		return
 	}
-	h.respondWithJson(w, http.StatusCreated, map[string]string{"dish": dish.Name}) //todo заменить везде на красивые выводы
+	h.respondWithJson(w, http.StatusCreated, map[string]string{"dish": dish.Name})
 }
 
 func (h *MealPlanHandler) GetIngredients(w http.ResponseWriter, r *http.Request) {
 	ingredients, err := h.service.GetIngredients()
 	if err != nil {
-		http.Error(w, "Error getting ingredients", http.StatusInternalServerError)
+		h.respondWithError(w, http.StatusInternalServerError, "Error get ingredients")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ingredients)
+	h.respondWithJson(w, http.StatusOK, ingredients)
 }

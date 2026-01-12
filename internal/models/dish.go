@@ -8,9 +8,8 @@ type Dish struct {
 }
 
 type Ingredient struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name" validate:"required,min=3,max=100"`
-	Calories int    `json:"calories"`
+	ID   int    `json:"id"`
+	Name string `json:"name" validate:"required,min=3,max=100"`
 }
 
 type CreateDishInput struct {
