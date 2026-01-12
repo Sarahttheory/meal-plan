@@ -37,20 +37,25 @@ func (r *MealPlanRepository) GetWeeklyPlan() (models.WeeklyPlan, error) {
 	return plan, nil
 }
 
+// TODO сомнения на счет такого использования транзакции
 func (r *MealPlanRepository) SaveWeeklyPlan(plan models.PlanItem) error {
 	tx, err := r.DB.Begin()
 	if err != nil {
 		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not begin transaction: %w", err)
 	}
+	defer tx.Rollback()
 
-	_, err = tx.Exec(
-		"INSERT INTO meal_plan_weekly_plan (day_id, meal_type_id, dish_id) VALUES ($1, $2, $3)",
-		plan.DayId, plan.MealTypeId, plan.DishId,
-	)
+	query := `
+    INSERT INTO meal_plan (day_id, meal_type_id, dish_id) VALUES ($1, $2, $3);
+    `
+	_, err = tx.Exec(query, plan.DayId, plan.MealTypeId, plan.DishId)
 	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not save meal plan: %w", err)
+		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not insert into MealPlan: %w", err)
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("repo: SaveWeeklyPlan failed. Could not commit transaction: %w", err)
+	}
+
+	return nil
 }

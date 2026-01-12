@@ -8,7 +8,7 @@ import (
 )
 
 func (h *MealPlanHandler) GetWeeklyPlan(w http.ResponseWriter, r *http.Request) {
-	weeklyPlan, err := h.Service.GetWeeklyPlan()
+	weeklyPlan, err := h.service.GetWeeklyPlan()
 	if err != nil {
 		http.Error(w, "Error getting weekly plan", http.StatusInternalServerError)
 		return
@@ -23,7 +23,13 @@ func (h *MealPlanHandler) SaveWeeklyPlan(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Error parsing request body", http.StatusBadRequest)
 		return
 	}
-	err := h.Service.SaveWeeklyPlan(plan)
+
+	if err := h.validator.Struct(plan); err != nil {
+		http.Error(w, "Error validating request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.service.SaveWeeklyPlan(plan)
 	if err != nil {
 		slog.Error("Error saving weekly plan: %v", err)
 		http.Error(w, "Error saving weekly plan", http.StatusInternalServerError)

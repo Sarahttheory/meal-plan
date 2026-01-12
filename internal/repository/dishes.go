@@ -39,11 +39,13 @@ func (r *MealPlanRepository) GetDishes() ([]models.Dish, error) {
 	return dishes, nil
 }
 
-func (r *MealPlanRepository) SaveDish(dish models.Dish) error {
+func (r *MealPlanRepository) SaveDish(dish models.CreateDishInput) error {
 	tx, err := r.DB.Begin()
 	if err != nil {
 		return fmt.Errorf("repo: SaveDish failed. Could not start transaction: %w", err)
 	}
+
+	defer tx.Rollback()
 
 	var lastInsertId int
 	err = tx.QueryRow(
@@ -52,17 +54,15 @@ func (r *MealPlanRepository) SaveDish(dish models.Dish) error {
 	).Scan(&lastInsertId)
 
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("repo: SaveDish failed. Could not insert dish: %w", err)
 	}
 
-	for _, ingredientId := range dish.Ingredients {
+	for _, ingredientId := range dish.IngredientIds {
 		_, err = tx.Exec(
 			"INSERT INTO ingredients_in_dish (dish_id, ingredient_id) VALUES ($1, $2)",
 			lastInsertId, ingredientId,
 		)
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("repo: SaveDish failed. Could not insert ingredient: %w", err)
 		}
 	}

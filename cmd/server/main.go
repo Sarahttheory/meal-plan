@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"embed"
 	"log/slog"
 	"meal-plan/internal/config"
 	"meal-plan/internal/database"
@@ -12,8 +11,6 @@ import (
 	"net/http"
 	"os"
 )
-
-var migrationsFS embed.FS
 
 func main() {
 	cfg := config.Load()

@@ -4,27 +4,27 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"log"
 	"log/slog"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
+//go:embed migrations/*.sql
 var migrationsFS embed.FS
 
 func New(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Fatalf("Failed to establish connection to the database: %v", err)
+		fmt.Errorf("failed to open db: %w", err)
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Database is unavailable: %v", err)
+		fmt.Errorf("failed to ping db: %w", err)
 	}
 
 	if err := runMigrations(db); err != nil {
-		return nil, fmt.Errorf("migrations: %w", err)
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return db, nil

@@ -2,13 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"log/slog"
 	"meal-plan/internal/models"
 	"net/http"
 )
 
 func (h *MealPlanHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
-	dishes, err := h.Service.GetDishes()
+	dishes, err := h.service.GetDishes()
 	if err != nil {
 		http.Error(w, "Error getting dishes", http.StatusInternalServerError)
 		return
@@ -18,22 +17,27 @@ func (h *MealPlanHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MealPlanHandler) SaveDish(w http.ResponseWriter, r *http.Request) {
-	var dish models.Dish
+	var dish models.CreateDishInput
 	if err := json.NewDecoder(r.Body).Decode(&dish); err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
+		h.respondWithJson(w, http.StatusBadRequest, "Error parsing request body")
 		return
 	}
-	err := h.Service.SaveDish(dish)
+
+	if err := h.validator.Struct(dish); err != nil {
+		h.respondWithError(w, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	err := h.service.SaveDish(dish)
 	if err != nil {
-		slog.Error("Error saving dish: %v", err)
-		http.Error(w, "Error saving dish", http.StatusInternalServerError)
+		h.respondWithError(w, http.StatusInternalServerError, "Could not save dish")
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	h.respondWithJson(w, http.StatusCreated, map[string]string{"dish": dish.Name}) //todo заменить везде на красивые выводы
 }
 
 func (h *MealPlanHandler) GetIngredients(w http.ResponseWriter, r *http.Request) {
-	ingredients, err := h.Service.GetIngredients()
+	ingredients, err := h.service.GetIngredients()
 	if err != nil {
 		http.Error(w, "Error getting ingredients", http.StatusInternalServerError)
 		return
