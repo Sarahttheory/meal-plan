@@ -18,6 +18,9 @@ func main() {
 
 	slog.Info("starting server meal plan", "port", cfg.Port)
 
+	//ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	//defer stop()
+
 	db, err := database.New(cfg.GetDNS())
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)

@@ -14,6 +14,7 @@ type Service interface {
 	GetIngredients(ctx context.Context) ([]models.Ingredient, error)
 	GetWeeklyPlan(ctx context.Context) (models.WeeklyPlan, error)
 	SaveWeeklyPlan(ctx context.Context, plan models.PlanItem) error
+	GetDashboard(ctx context.Context) (models.DashboardData, error)
 }
 
 type MealPlanHandler struct {

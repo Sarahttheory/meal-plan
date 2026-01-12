@@ -10,10 +10,14 @@ import (
 func (h *MealPlanHandler) InitRoutes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Recoverer)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "web/index.html")
 	})
+	r.Get("/dashboard", h.GetDashboard)
 	r.Route("/plan", func(r chi.Router) {
 		r.Get("/weekly", h.GetWeeklyPlan)
 		//r.Put("/add")

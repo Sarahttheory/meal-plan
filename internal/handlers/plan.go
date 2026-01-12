@@ -35,3 +35,13 @@ func (h *MealPlanHandler) SaveWeeklyPlan(w http.ResponseWriter, r *http.Request)
 	}
 	h.respondWithJson(w, http.StatusCreated, map[string]interface{}{"weekly_plan": plan}) //todo проверить
 }
+
+func (h *MealPlanHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	data, err := h.service.GetDashboard(ctx)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, "Error getting dashboard")
+		return
+	}
+	h.respondWithJson(w, http.StatusOK, data)
+}
